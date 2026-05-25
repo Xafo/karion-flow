@@ -60,10 +60,10 @@ for (pkg in bioc_targets) {
 }
 
 cat("\n=== Verificacion final ===\n")
-all_pkgs <- unique(c(tolower(cran), bioc_targets))
+installed_pkgs <- tolower(rownames(installed.packages()))
 fail <- c()
-for (p in all_pkgs) {
-  ok <- requireNamespace(p, quietly = TRUE)
+for (p in unique(c(cran, bioc_targets))) {
+  ok <- tolower(p) %in% installed_pkgs
   cat(if (ok) "  [OK]" else "  [FALTA]", p, "\n")
   if (!ok) fail <- c(fail, p)
 }
