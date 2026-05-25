@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     libgmp-dev \
     libmpfr-dev \
+    libglpk-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
