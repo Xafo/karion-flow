@@ -38,47 +38,37 @@ function() {
   )
 }
 
-#' Subir archivos FCS e iniciar analisis
-#' @parser multipart
+#' Subir archivos FCS e iniciar analisis (base64 via JSON)
+#' @parser json
 #' @post /api/analizar
 function(req, res) {
   tryCatch({
     body <- req$body
-    files <- body[["files"]]
-
-    if (is.null(files)) {
+    if (is.null(body)) {
       res$status <- 400
-      return(list(error = "No se recibieron archivos FCS en el campo 'files'"))
+      return(list(error = "Cuerpo de solicitud vacio. Enviar JSON: {files: [{name, data}]}"))
     }
-
-    if (is.data.frame(files)) {
-      file_list <- split(files, seq_len(nrow(files)))
-    } else if (is.list(files)) {
-      file_list <- files
-    } else {
+    
+    files_df <- body[["files"]]
+    if (is.null(files_df) || nrow(files_df) == 0) {
       res$status <- 400
-      return(list(error = "Formato de archivos no reconocido"))
+      return(list(error = "No se recibieron archivos en el campo 'files'"))
     }
 
     fcs_paths <- character()
-    for (f in file_list) {
-      name <- f$name
-      if (is.null(name)) {
-        if (is.character(f)) {
-          name <- f
-        } else next
-      }
-      if (grepl("\\.fcs$", name, ignore.case = TRUE)) {
-        datapath <- f$datapath
-        if (!is.null(datapath) && file.exists(datapath)) {
-          fcs_paths <- c(fcs_paths, datapath)
-        }
+    for (i in seq_len(nrow(files_df))) {
+      fname <- files_df$name[i]
+      fdata <- files_df$data[i]
+      if (!is.null(fdata) && !is.na(fdata) && grepl("\\.fcs$", fname %||% "", ignore.case = TRUE)) {
+        tmp <- tempfile(fileext = ".fcs")
+        writeBin(base64enc::base64decode(fdata), tmp)
+        fcs_paths <- c(fcs_paths, tmp)
       }
     }
 
     if (length(fcs_paths) == 0) {
       res$status <- 400
-      return(list(error = "No se encontraron archivos .fcs en la subida"))
+      return(list(error = "No se encontraron archivos .fcs validos en la subida"))
     }
 
     analysis_id <- paste0("KF-", format(Sys.time(), "%Y%m%d-%H%M%S"), "-",

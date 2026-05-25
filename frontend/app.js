@@ -1,4 +1,6 @@
-const API_BASE = 'http://localhost:8080';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8080'
+  : '';
 
 const state = {
   files: [],
@@ -96,23 +98,40 @@ $('btn-clear').addEventListener('click', () => {
 // ---- Analyze ----
 $('btn-analyze').addEventListener('click', startAnalysis);
 
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 async function startAnalysis() {
   if (state.files.length === 0) return;
 
   $('progress-card').hidden = false;
   $('results-card').hidden = true;
   $('progress-fill').style.width = '5%';
+  $('progress-status').textContent = 'Codificando archivos...';
+
+  $('progress-fill').style.width = '10%';
   $('progress-status').textContent = 'Subiendo archivos...';
 
-  const formData = new FormData();
+  const filesPayload = [];
   for (const f of state.files) {
-    formData.append('files', f);
+    const b64 = await readFileAsBase64(f);
+    filesPayload.push({ name: f.name, data: b64 });
   }
 
   try {
     const resp = await fetch(`${API_BASE}/api/analizar`, {
       method: 'POST',
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: filesPayload })
     });
     const data = await resp.json();
 

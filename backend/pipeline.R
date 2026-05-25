@@ -400,7 +400,7 @@ pagina_heatmap_poblaciones <- function(expr_global, nombre_paciente) {
     scale_fill_gradient2(low = "#1A5276", mid = "#F9E79F", high = "#C0392B",
                          midpoint = 40, name = "% Positivo") +
     labs(title = paste0("Heatmap Poblacion x Marcador  -  ", nombre_paciente),
-         subtitle = "% de celulas positivas por poblacion (umbral logicle > ", UMBRAL_POS_CLSI, ")",
+         subtitle = paste0("% de celulas positivas por poblacion (umbral logicle > ", UMBRAL_POS_CLSI, ")"),
          x = "Marcador", y = "Poblacion CLSI H62") +
     theme_minimal(base_size = 10) +
     theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 9),
@@ -485,7 +485,7 @@ pagina_aps_clsi <- function(expr_global, nombre_paciente) {
   if (n_marc >= 3 && n_pob >= 2 && !is.null(radar_wide)) {
     pushViewport(viewport(layout = grid.layout(1, 2)))
     pushViewport(viewport(layout.pos.col = 1))
-    print(p_aps, newpage = FALSE)
+    grid.draw(ggplotGrob(p_aps))
     upViewport()
     pushViewport(viewport(layout.pos.col = 2))
     cols_radar <- grep("^Pct_pos_escalado\\.", colnames(radar_wide), value = TRUE)
@@ -526,13 +526,13 @@ pagina_aps_clsi <- function(expr_global, nombre_paciente) {
     grid.text("Firma Antigenica (Radar)",
               x = 0.5, y = 0.97, gp = gpar(fontsize = 10, fontface = "bold"))
     upViewport()
+    popViewport()
   } else {
     pushViewport(viewport(width = 0.97, height = 0.94))
-    print(p_aps, newpage = FALSE)
+    grid.draw(ggplotGrob(p_aps))
     popViewport()
   }
   
-  popViewport()
   grid.newpage()
   pushViewport(viewport(width = 0.97, height = 0.94))
   lolli_agg <- aggregate(Pct_pos ~ Marcador, data = agr, FUN = mean)
@@ -557,7 +557,7 @@ pagina_aps_clsi <- function(expr_global, nombre_paciente) {
     annotate("text", x = 10, y = 0.6, label = "Bajo", size = 3, color = "orange") +
     annotate("text", x = 35, y = 0.6, label = "Moderado", size = 3, color = "orange") +
     annotate("text", x = 75, y = 0.6, label = "Alto", size = 3, color = "red")
-  print(p_lolli)
+  grid.draw(ggplotGrob(p_lolli))
   popViewport()
 }
 
@@ -662,7 +662,7 @@ pagina_seccion_infinicyt <- function(df_infinicyt, nombre_paciente) {
     c2 <- mark_cols[min(ip * 2, length(mark_cols))]
     grid.newpage()
     pushViewport(viewport(width = 0.97, height = 0.94))
-    p_biv <- ggplot(df_inf_plot, aes_string(x = c1, y = c2, color = "Poblacion")) +
+    p_biv <- ggplot(df_inf_plot, aes(x = .data[[c1]], y = .data[[c2]], color = .data[["Poblacion"]])) +
       geom_point(size = 0.5, alpha = 0.5) +
       scale_color_manual(values = COLORES_CLSI, drop = FALSE) +
       labs(title = paste0(c1, " vs ", c2, "  (", nombre_paciente, ")"),
@@ -670,7 +670,7 @@ pagina_seccion_infinicyt <- function(df_infinicyt, nombre_paciente) {
       theme_bw(base_size = 10) +
       theme(plot.title = element_text(size = 11, face = "bold"),
             legend.position = "right")
-    print(p_biv)
+    grid.draw(ggplotGrob(p_biv))
     popViewport()
   }
   
@@ -699,7 +699,7 @@ pagina_seccion_infinicyt <- function(df_infinicyt, nombre_paciente) {
       annotate("text", x = 0.5, y = UMBRAL_POS_CLSI + 0.1,
                label = paste0("Umbral positividad (", UMBRAL_POS_CLSI, ")"),
                hjust = 0, size = 3, color = "red", alpha = 0.7)
-    print(p_bar)
+    grid.draw(ggplotGrob(p_bar))
     popViewport()
   }
 }
