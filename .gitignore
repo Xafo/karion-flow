@@ -1,0 +1,11 @@
+*.Rproj
+.Rproj.user
+.Rhistory
+.RData
+.Renv
+.DS_Store
+*.pdf
+*.html
+*/widgets/
+/tmp/
+node_modules/
