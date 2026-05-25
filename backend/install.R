@@ -2,19 +2,15 @@ os <- system("cat /etc/os-release | grep ^VERSION_CODENAME", intern = TRUE)
 os <- tolower(sub("VERSION_CODENAME=", "", os))
 cat("OS detectado:", os, "\n")
 
-if (os == "noble") {
-  rspm <- "https://packagemanager.rstudio.com/all/__linux__/noble/latest"
-} else {
-  rspm <- paste0("https://packagemanager.rstudio.com/all/__linux__/", os, "/latest")
-}
-
+rspm <- paste0("https://packagemanager.rstudio.com/all/__linux__/", os, "/latest")
 options(repos = structure(c(CRAN = rspm)))
 Sys.setenv(MAKEFLAGS = "-j1")
 
 cran <- c(
   "ggplot2", "gridExtra", "MASS", "scatterplot3d", "plotly",
   "htmltools", "htmlwidgets", "base64enc", "jsonlite", "plumber",
-  "yaml", "mime"
+  "yaml", "mime", "igraph", "Rcpp", "RcppArmadillo", "Rtsne",
+  "ConsensusClusterPlus", "corrplot", "ggrepel", "ggsci"
 )
 
 bioc <- c("flowCore", "PeacoQC", "FlowSOM")
@@ -34,7 +30,7 @@ inst <- function(pkg, repo = getOption("repos")) {
   }
 }
 
-cat("\n=== CRAN packages ===\n")
+cat("\n=== CRAN packages (binary via RSPM) ===\n")
 for (p in cran) inst(p)
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -71,4 +67,4 @@ if (length(fail)) {
   cat("\nFaltan:", paste(fail, collapse = ", "), "\n")
   quit(save = "no", status = 1)
 }
-cat("\nInstalacion completada.\n")
+cat("\nInstalacion completada exitosamente.\n")
