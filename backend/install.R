@@ -1,5 +1,5 @@
-os <- tolower(system("cat /etc/os-release | grep ^VERSION_CODENAME", intern = TRUE))
-os <- sub("VERSION_CODENAME=", "", os)
+os <- system("cat /etc/os-release | grep ^VERSION_CODENAME", intern = TRUE)
+os <- tolower(sub("VERSION_CODENAME=", "", os))
 cat("OS detectado:", os, "\n")
 
 if (os == "noble") {
