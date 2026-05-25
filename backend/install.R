@@ -1,17 +1,10 @@
 os <- system("cat /etc/os-release | grep ^VERSION_CODENAME", intern = TRUE)
 os <- tolower(sub("VERSION_CODENAME=", "", os))
-cat("OS detectado:", os, "\n")
-
 rspm <- paste0("https://packagemanager.rstudio.com/all/__linux__/", os, "/latest")
 options(repos = structure(c(CRAN = rspm)))
 Sys.setenv(MAKEFLAGS = "-j1")
 
-cran <- c(
-  "ggplot2", "gridExtra", "MASS", "scatterplot3d", "plotly",
-  "htmltools", "htmlwidgets", "base64enc", "jsonlite", "plumber",
-  "yaml", "mime", "igraph", "Rcpp", "RcppArmadillo", "Rtsne",
-  "ConsensusClusterPlus", "corrplot", "ggrepel", "ggsci"
-)
+cran <- c("plumber", "plotly", "scatterplot3d", "base64enc", "jsonlite", "yaml")
 
 bioc <- c("flowCore", "PeacoQC", "FlowSOM")
 
@@ -20,21 +13,15 @@ inst <- function(pkg, repo = getOption("repos")) {
     cat("  [SKIP]", pkg, "\n"); return(invisible(TRUE))
   }
   cat("  Instalando:", pkg, "\n")
-  result <- tryCatch(
-    install.packages(pkg, repos = repo, quiet = TRUE),
-    error = function(e) e
-  )
-  if (inherits(result, "error") || !requireNamespace(pkg, quietly = TRUE)) {
+  install.packages(pkg, repos = repo, quiet = TRUE)
+  if (!requireNamespace(pkg, quietly = TRUE)) {
     cat("  [FALLO]", pkg, "- abortando\n")
     quit(save = "no", status = 1)
   }
 }
 
-cat("\n=== CRAN packages (binary via RSPM) ===\n")
+cat("=== CRAN packages (binary via RSPM) ===\n")
 for (p in cran) inst(p)
-
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  inst("BiocManager")
 
 cat("\n=== Bioconductor packages ===\n")
 for (p in bioc) {
@@ -57,8 +44,9 @@ for (p in bioc) {
 }
 
 cat("\n=== Verificacion final ===\n")
+all_pkgs <- c(cran, bioc, "ggplot2", "gridExtra", "MASS", "igraph", "htmltools", "htmlwidgets", "mime")
 fail <- c()
-for (p in c(cran, bioc)) {
+for (p in all_pkgs) {
   ok <- requireNamespace(p, quietly = TRUE)
   cat(if (ok) "  [OK]" else "  [FALTA]", p, "\n")
   if (!ok) fail <- c(fail, p)
@@ -67,4 +55,4 @@ if (length(fail)) {
   cat("\nFaltan:", paste(fail, collapse = ", "), "\n")
   quit(save = "no", status = 1)
 }
-cat("\nInstalacion completada exitosamente.\n")
+cat("\nInstalacion completada.\n")
