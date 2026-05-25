@@ -1,63 +1,51 @@
-# =============================================================================
-# install.R  --  Instalacion de paquetes para Karion-Flow
-# =============================================================================
-# Ejecutar: Rscript install.R
+options(repos = structure(c(CRAN = "https://packagemanager.rstudio.com/all/__linux__/jammy/latest")))
+Sys.setenv(MAKEFLAGS = "-j1")
 
-packages <- c(
-  "flowCore",
-  "PeacoQC",
-  "FlowSOM",
-  "ggplot2",
-  "gridExtra",
-  "grid",
-  "MASS",
-  "scatterplot3d",
-  "plotly",
-  "htmltools",
-  "htmlwidgets",
-  "base64enc",
-  "jsonlite",
-  "plumber",
-  "yaml",
-  "mime"
+cran <- c(
+  "ggplot2", "gridExtra", "MASS", "scatterplot3d", "plotly",
+  "htmltools", "htmlwidgets", "base64enc", "jsonlite", "plumber",
+  "yaml", "mime", "igraph", "Rcpp", "RcppArmadillo"
 )
 
-# Bioconductor packages
-bioc_packages <- c("flowCore", "PeacoQC", "FlowSOM")
+bioc <- c("flowCore", "PeacoQC", "FlowSOM")
 
-# CRAN packages
-cran_packages <- setdiff(packages, bioc_packages)
-
-cat("Instalando paquetes CRAN...\n")
-for (pkg in cran_packages) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    cat("  Instalando:", pkg, "\n")
-    install.packages(pkg, repos = "https://cloud.r-project.org", quiet = TRUE)
-  } else {
-    cat("  OK:", pkg, "\n")
-  }
-}
-
-cat("\nInstalando paquetes Bioconductor...\n")
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager", repos = "https://cloud.r-project.org", quiet = TRUE)
-
-for (pkg in bioc_packages) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    cat("  Instalando:", pkg, "\n")
-    BiocManager::install(pkg, update = FALSE, ask = FALSE, quiet = TRUE)
-  } else {
-    cat("  OK:", pkg, "\n")
-  }
-}
-
-cat("\nVerificacion final:\n")
-for (pkg in packages) {
+inst <- function(pkg, repo = getOption("repos")) {
   if (requireNamespace(pkg, quietly = TRUE)) {
-    cat("  [OK]", pkg, "\n")
+    cat("  [SKIP]", pkg, "\n"); return(invisible(TRUE))
+  }
+  cat("  Instalando:", pkg, "\n")
+  install.packages(pkg, repos = repo, quiet = TRUE)
+}
+
+cat("=== CRAN packages (via RSPM binary) ===\n")
+for (p in cran) inst(p)
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager", repos = getOption("repos"), quiet = TRUE)
+
+cat("\n=== Bioconductor packages ===\n")
+for (p in bioc) {
+  if (requireNamespace(p, quietly = TRUE)) {
+    cat("  [SKIP]", p, "\n")
   } else {
-    cat("  [FALTA]", pkg, "\n")
+    cat("  Instalando:", p, "\n")
+    BiocManager::install(p, update = FALSE, ask = FALSE, quiet = TRUE)
+    if (!requireNamespace(p, quietly = TRUE)) {
+      cat("  [FALLA GRAVE]", p, "- abortando\n")
+      quit(save = "no", status = 1)
+    }
   }
 }
 
-cat("\nInstalacion completada.\n")
+cat("\n=== Verificacion final ===\n")
+fail <- c()
+for (p in c(cran, bioc)) {
+  ok <- requireNamespace(p, quietly = TRUE)
+  cat(if (ok) "  [OK]" else "  [FALTA]", p, "\n")
+  if (!ok) fail <- c(fail, p)
+}
+if (length(fail)) {
+  cat("\nPaquetes faltantes:", paste(fail, collapse = ", "), "\n")
+  quit(save = "no", status = 1)
+}
+cat("\nInstalacion completada exitosamente.\n")
