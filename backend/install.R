@@ -57,8 +57,9 @@ for (p in bioc_targets) {
     cat("  [SKIP]", p, "\n"); next
   }
   cat("  Instalando:", p, "\n")
+  quiet_opt <- if (p == "FlowSOM") FALSE else TRUE
   tryCatch(
-    BiocManager::install(p, update = FALSE, ask = FALSE, quiet = TRUE),
+    BiocManager::install(p, update = FALSE, ask = FALSE, quiet = quiet_opt),
     error = function(e) {
       cat("  [FATAL]", p, ":", conditionMessage(e), "\n")
       quit(save = "no", status = 1)
