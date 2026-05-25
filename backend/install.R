@@ -23,7 +23,8 @@ cran <- c(
   "dplyr", "tidyr", "tibble", "pillar", "lazyeval", "crosstalk", "purrr",
   "fastmap", "knitr", "rmarkdown", "xfun", "bslib", "sass", "jquerylib",
   "fontawesome", "evaluate", "highr", "rappdirs", "cachem", "memoise",
-  "XML", "R6", "httr", "generics", "tidyselect", "pkgconfig"
+  "XML", "R6", "httr", "generics", "tidyselect", "pkgconfig", "BH",
+  "circlize", "GetoptLong", "xml2"
 )
 
 cat("=== Installing ALL CRAN deps as binary via RSPM ===\n")
