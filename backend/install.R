@@ -4,47 +4,62 @@ rspm <- paste0("https://packagemanager.rstudio.com/all/__linux__/", os, "/latest
 options(repos = structure(c(CRAN = rspm)))
 Sys.setenv(MAKEFLAGS = "-j1")
 
-cran <- c("plumber", "plotly", "scatterplot3d", "base64enc", "jsonlite", "yaml")
+# All CRAN packages needed by FlowSOM/PeacoQC/flowCore transitively
+# Installed as RSPM binary (seconds each, no OOM risk)
+cran <- c(
+  "plumber", "plotly", "scatterplot3d", "base64enc", "jsonlite", "yaml",
+  "Rcpp", "matrixStats", "data.table", "foreach", "doParallel", "plyr",
+  "abind", "rjson", "iterators", "colorspace", "clue", "png", "shape",
+  "RcppArmadillo", "colorRamps", "Rtsne", "corrplot", "ggrepel", "ggsci",
+  "cowplot", "ggsignif", "ggforce", "ggnewscale", "ggpubr", "rstatix",
+  "polynom", "tweenr", "polyclip", "systemfonts",
+  "igraph", "car", "carData", "lme4", "nloptr", "minqa", "RcppEigen",
+  "pbkrtest", "quantreg", "SparseM", "MatrixModels",
+  "forecast", "fracdiff", "lmtest", "timeDate", "urca", "zoo",
+  "broom", "doBy", "numDeriv", "microbenchmark", "modelr",
+  "Deriv", "Rdpack", "rbibutils", "backports", "Formula",
+  "httpuv", "sodium", "swagger", "webutils", "openssl", "curl",
+  "crayon", "later", "promises", "stringi", "stringr", "digest", "magrittr",
+  "dplyr", "tidyr", "tibble", "pillar", "lazyeval", "crosstalk", "purrr",
+  "fastmap", "knitr", "rmarkdown", "xfun", "bslib", "sass", "jquerylib",
+  "fontawesome", "evaluate", "highr", "rappdirs", "cachem", "memoise",
+  "XML", "R6", "httr", "generics", "tidyselect", "pkgconfig"
+)
 
-bioc <- c("flowCore", "PeacoQC", "FlowSOM")
+cat("=== Installing ALL CRAN deps as binary via RSPM ===\n")
+for (p in cran) {
+  p_lower <- tolower(p)
+  if (requireNamespace(p_lower, quietly = TRUE) || requireNamespace(p, quietly = TRUE)) {
+    cat("  [SKIP]", p, "\n")
+    next
+  }
+  cat("  Instalando:", p, "\n")
+  tryCatch(
+    install.packages(p, quiet = TRUE),
+    error = function(e) cat("  [WARN]", p, ":", conditionMessage(e), "\n")
+  )
+}
 
-inst <- function(pkg, repo = getOption("repos")) {
+cat("\n=== Bioconductor packages ===\n")
+bioc_targets <- c("flowCore", "PeacoQC", "FlowSOM")
+for (pkg in bioc_targets) {
   if (requireNamespace(pkg, quietly = TRUE)) {
-    cat("  [SKIP]", pkg, "\n"); return(invisible(TRUE))
+    cat("  [SKIP]", pkg, "\n")
+    next
   }
   cat("  Instalando:", pkg, "\n")
-  install.packages(pkg, repos = repo, quiet = TRUE)
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    cat("  [FALLO]", pkg, "- abortando\n")
+  result <- tryCatch(
+    BiocManager::install(pkg, update = FALSE, ask = FALSE, quiet = TRUE),
+    error = function(e) e
+  )
+  if (inherits(result, "error") || !requireNamespace(pkg, quietly = TRUE)) {
+    cat("  [FATAL]", pkg, "- fallo\n")
     quit(save = "no", status = 1)
   }
 }
 
-cat("=== CRAN packages (binary via RSPM) ===\n")
-for (p in cran) inst(p)
-
-cat("\n=== Bioconductor packages ===\n")
-for (p in bioc) {
-  if (requireNamespace(p, quietly = TRUE)) {
-    cat("  [SKIP]", p, "\n")
-  } else {
-    cat("  Instalando:", p, "\n")
-    tryCatch(
-      BiocManager::install(p, update = FALSE, ask = FALSE, quiet = TRUE),
-      error = function(e) {
-        cat("  [FALLO]", p, ":", conditionMessage(e), "\n")
-        quit(save = "no", status = 1)
-      }
-    )
-    if (!requireNamespace(p, quietly = TRUE)) {
-      cat("  [FALLA GRAVE]", p, "- abortando\n")
-      quit(save = "no", status = 1)
-    }
-  }
-}
-
 cat("\n=== Verificacion final ===\n")
-all_pkgs <- c(cran, bioc, "ggplot2", "gridExtra", "MASS", "igraph", "htmltools", "htmlwidgets", "mime")
+all_pkgs <- unique(c(tolower(cran), bioc_targets))
 fail <- c()
 for (p in all_pkgs) {
   ok <- requireNamespace(p, quietly = TRUE)
