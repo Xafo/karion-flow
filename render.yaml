@@ -17,9 +17,9 @@ services:
     name: karion-flow-frontend
     runtime: static
     repo: https://github.com/Xafo/karion-flow
-    region: ohio
     buildCommand: ""
     staticPublishPath: ./frontend
+    pullRequestPreviewsEnabled: false
     envVars:
       - key: API_URL
         value: https://karion-flow-api.onrender.com
