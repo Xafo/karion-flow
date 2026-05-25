@@ -18,10 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY install.R /app/install.R
+COPY backend/install.R /app/install.R
 RUN Rscript install.R
 
-COPY pipeline.R plumber.R /app/
+COPY backend/pipeline.R backend/plumber.R /app/
 
 EXPOSE 8080
 
