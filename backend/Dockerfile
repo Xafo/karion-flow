@@ -1,4 +1,4 @@
-FROM rocker/bioc:4.4.1
+FROM bioconductor/bioconductor_docker:3.20
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2-dev \
