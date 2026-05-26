@@ -245,6 +245,7 @@ clasificar_cd45ssc_clsi <- function(tubos_ff, canal_cd45) {
   indices_ini <- c(1, head(indices_fin, -1) + 1)
   lapply(seq_along(tubos_ff), function(i)
     pob_todos[indices_ini[i]:indices_fin[i]])
+  gc()
 }
 
 caracterizar_marcadores <- function(datos_df, poblaciones_vec, marcadores) {
@@ -1174,6 +1175,7 @@ analizar_fcs <- function(fcs_paths, output_dir, patient_id = NULL,
             datos_infinicyt[[nomb_tubo]] <- inf_df
           }
         }
+        suppressWarnings(rm(ff, datos_mdf, inf_df, mat_df)); gc()
       }
       
       fusion_df    <- do.call(rbind, datos_fusion)
@@ -1190,6 +1192,8 @@ analizar_fcs <- function(fcs_paths, output_dir, patient_id = NULL,
         } else NULL
       }, error = function(e) NULL)
       qc_df <- do.call(rbind, qc_info_rows)
+      rm(datos_fusion, expr_global_all, comp_por_tubo, datos_infinicyt, qc_info_rows)
+      rm(expr_por_tubo); tubos_ff_trans[] <- list(NULL); gc()
       
       comp_global <- aggregate(x = comp_df$N, by = list(Poblacion = comp_df$Poblacion), FUN = sum)
       colnames(comp_global)[2] <- "N"
@@ -1200,6 +1204,7 @@ analizar_fcs <- function(fcs_paths, output_dir, patient_id = NULL,
                                         paste0(clave_paciente, "_expr_clsi.csv")), row.names = FALSE)
       write.csv(comp_df, file.path(output_dir, "tablas_clsi",
                                     paste0(clave_paciente, "_composicion_clsi.csv")), row.names = FALSE)
+      rm(expr_global); gc()
       
       pdf(ruta_pdf, width = 14, height = 10)
       pagina_portada_clsi(clave_paciente, tubos_info, comp_global)
