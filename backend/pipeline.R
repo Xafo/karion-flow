@@ -909,6 +909,12 @@ pagina_aps_3d_html <- function(fusion_df, clave_paciente, output_dir) {
   if (is.null(fusion_df) || nrow(fusion_df) < 100) return(NULL)
   df <- fusion_df[fusion_df$Poblacion %in% ORDEN_POB, , drop = FALSE]
   if (nrow(df) < 100) return(NULL)
+  MAX_3D <- 5000
+  if (nrow(df) > MAX_3D) {
+    set.seed(SEMILLA)
+    df <- df[sample(nrow(df), MAX_3D), , drop = FALSE]
+    rm(fusion_df); gc()
+  }
   df$Poblacion <- factor(df$Poblacion, levels = ORDEN_POB)
   df_s <- df
   tiene_fsc <- "fsc" %in% colnames(df_s) && !all(is.na(df_s$fsc))
@@ -999,6 +1005,7 @@ pagina_aps_3d_html <- function(fusion_df, clave_paciente, output_dir) {
                wc)
     writeLines(wc, ruta_widget)
   }, error = function(e) {})
+  rm(df_s, fig); gc()
   ruta_widget
 }
 
@@ -1236,7 +1243,7 @@ analizar_fcs <- function(fcs_paths, output_dir, patient_id = NULL,
       
       ruta_pdf_abs <- normalizePath(ruta_pdf)
       png_prefix <- basename(ruta_png_base)
-      system2("pdftoppm", c("-png", "-r", "150", ruta_pdf_abs, ruta_png_base),
+      system2("pdftoppm", c("-png", "-r", "72", ruta_pdf_abs, ruta_png_base),
               stdout = FALSE, stderr = FALSE)
       Sys.sleep(0.5)
       all_png <- list.files(dir_salida, pattern = "\\.png$")
@@ -1256,6 +1263,10 @@ analizar_fcs <- function(fcs_paths, output_dir, patient_id = NULL,
                base64enc::base64encode(readBin(f, raw(), file.info(f)$size)))
       })
       unlink(png_files)
+      
+      rm(fusion_df, comp_df, qc_df, datos_fusion, comp_por_tubo, qc_info_rows)
+      rm(tubos_ff_trans, tubos_info, tubos_marcad, expr_por_tubo, expr_global_all, datos_infinicyt)
+      gc()
       
       n_pags <- length(png_data_urls)
       etiquetas <- character(0)
