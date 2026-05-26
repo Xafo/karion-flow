@@ -24,7 +24,7 @@ WORKDIR /app
 COPY backend/install.R /app/install.R
 RUN Rscript install.R
 
-COPY backend/pipeline.R backend/plumber.R /app/
+COPY backend/pipeline.R backend/plumber.R backend/run_job.R /app/
 
 EXPOSE 8080
 
