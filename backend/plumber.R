@@ -16,7 +16,7 @@
 library(plumber)
 library(jsonlite)
 
-source("pipeline.R")
+`%||%` <- function(a, b) if (is.null(a) || is.na(a)) b else a
 
 #* @filter cors
 function(req, res) {
@@ -88,6 +88,8 @@ function(req, res) {
     analysis_id <- paste0("KF-", format(Sys.time(), "%Y%m%d-%H%M%S"), "-",
                           substr(paste0(sample(c(0:9, letters, LETTERS), 6, replace = TRUE), collapse = ""), 1, 6))
 
+    patient_id <- body$paciente %||% body$patient_id %||% ""
+    
     output_dir <- file.path(ANALISIS_DIR, analysis_id)
     dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -98,39 +100,17 @@ function(req, res) {
     }
     fcs_final <- list.files(fcs_dest, pattern = "\\.fcs$", full.names = TRUE, ignore.case = TRUE)
 
+    write_json(list(fcs_paths = fcs_final, patient_id = patient_id),
+               file.path(output_dir, "metadata.json"), auto_unbox = TRUE)
+
     estado_file <- file.path(output_dir, "estado.json")
     write_json(list(
       id = analysis_id, estado = "procesando",
       timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
-      archivos = length(fcs_final), progreso = 0
+      archivos = length(fcs_final), paciente = patient_id
     ), estado_file, auto_unbox = TRUE)
 
-    if (.Platform$OS.type == "windows") {
-      system2("Rscript", c("-e", shQuote(paste0(
-        'source("pipeline.R"); ',
-        'fcs_files <- list.files("', fcs_dest, '", pattern="\\\\.fcs$", full.names=TRUE, ignore.case=TRUE); ',
-        'res <- analizar_fcs(fcs_files, "', output_dir, '"); ',
-        'if (is.null(res$error)) { ',
-        '  write_json(list(id="', analysis_id, '",estado="completado",ruta_html=res$ruta_html,ruta_pdf=res$ruta_pdf,pacientes=res$pacientes), "',
-        estado_file, '", auto_unbox=TRUE); ',
-        '} else { write_json(list(id="', analysis_id, '",estado="error",error=res$error), "', estado_file, '", auto_unbox=TRUE); }'
-      ))), wait = FALSE)
-    } else {
-      parallel::mcparallel({
-        resultado <- analizar_fcs(fcs_final, output_dir)
-        if (is.null(resultado$error)) {
-          write_json(list(id = analysis_id, estado = "completado",
-                          ruta_html = resultado$ruta_html,
-                          ruta_pdf = resultado$ruta_pdf,
-                          pacientes = resultado$pacientes),
-                     estado_file, auto_unbox = TRUE)
-        } else {
-          write_json(list(id = analysis_id, estado = "error",
-                          error = resultado$error),
-                     estado_file, auto_unbox = TRUE)
-        }
-      })
-    }
+    system2("Rscript", c("run_job.R", output_dir), wait = FALSE)
 
     list(id = analysis_id, estado = "procesando",
          archivos = length(fcs_final),
@@ -147,11 +127,19 @@ function(req, res) {
 function(id, res) {
   output_dir <- file.path(ANALISIS_DIR, id)
   estado_file <- file.path(output_dir, "estado.json")
+  result_file <- file.path(output_dir, "resultado.json")
 
   if (!file.exists(output_dir)) {
     res$status <- 404
     return(list(error = "Analisis no encontrado", id = id))
   }
+  
+  if (file.exists(result_file)) {
+    resultado <- fromJSON(result_file)
+    resultado$id <- id
+    return(resultado)
+  }
+  
   if (!file.exists(estado_file)) {
     res$status <- 500
     return(list(error = "Archivo de estado no encontrado", id = id))
@@ -165,25 +153,25 @@ function(id, res) {
 #' @serializer contentType list(type="text/html")
 function(id, res) {
   output_dir <- file.path(ANALISIS_DIR, id)
-  estado_file <- file.path(output_dir, "estado.json")
+  result_file <- file.path(output_dir, "resultado.json")
 
   if (!file.exists(output_dir)) {
     res$status <- 404
     return(list(error = "Analisis no encontrado"))
   }
-  if (!file.exists(estado_file)) {
-    res$status <- 500
-    return(list(error = "Archivo de estado no encontrado"))
-  }
-
-  estado <- fromJSON(estado_file)
-  if (estado$estado != "completado") {
+  if (!file.exists(result_file)) {
     res$status <- 400
-    return(list(error = "Analisis no completado", estado = estado$estado))
+    return(list(error = "Analisis no completado"))
   }
 
-  ruta_html <- estado$ruta_html
-  if (is.null(ruta_html) || is.na(ruta_html) || !file.exists(ruta_html)) {
+  resultado <- fromJSON(result_file)
+  if (resultado$estado != "completado") {
+    res$status <- 400
+    return(list(error = "Analisis no completado", estado = resultado$estado))
+  }
+
+  ruta_html <- resultado$ruta_html
+  if (is.null(ruta_html) || is.na(ruta_html) || nchar(ruta_html) == 0 || !file.exists(ruta_html)) {
     posibles <- list.files(output_dir, pattern = "\\.html$", full.names = TRUE)
     if (length(posibles) > 0) {
       ruta_html <- posibles[1]
