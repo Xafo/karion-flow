@@ -37,7 +37,8 @@ N_POB_CLSI <- 5
 SEMILLA         <- 8471
 UMBRAL_POS_CLSI <- 1.5
 UMBRAL_QC_FLAG  <- 20
-MAX_PLOT        <- 50000
+MAX_PLOT        <- 10000
+MAX_EVENTOS     <- 20000
 UMBRAL_SATURACION <- 260000
 RADIO_PEAK_GATE   <- 40000
 MIN_EVENTOS_COV   <- 10
@@ -910,7 +911,7 @@ pagina_aps_3d_html <- function(fusion_df, clave_paciente, output_dir) {
   if (is.null(fusion_df) || nrow(fusion_df) < 100) return(NULL)
   df <- fusion_df[fusion_df$Poblacion %in% ORDEN_POB, , drop = FALSE]
   if (nrow(df) < 100) return(NULL)
-  MAX_3D <- 5000
+  MAX_3D <- 2000
   if (nrow(df) > MAX_3D) {
     set.seed(SEMILLA)
     df <- df[sample(nrow(df), MAX_3D), , drop = FALSE]
@@ -1086,6 +1087,9 @@ analizar_fcs <- function(fcs_paths, output_dir, patient_id = NULL,
         
         resultado_tubo <- tryCatch({
           ff_raw      <- read.FCS(ruta, transformation = FALSE, truncate_max_range = FALSE)
+          if (nrow(ff_raw) > MAX_EVENTOS) {
+            set.seed(SEMILLA); ff_raw <- ff_raw[sample(nrow(ff_raw), MAX_EVENTOS), ]
+          }
           ff_raw      <- aplicar_compensacion(ff_raw)
           panel_info  <- detectar_marcadores(ff_raw)
           canales_fl  <- names(panel_info$todos_canales)
