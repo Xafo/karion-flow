@@ -18,6 +18,20 @@ library(jsonlite)
 
 source("pipeline.R")
 
+#* @filter cors
+function(req, res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  res$setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+  res$setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+  if (req$REQUEST_METHOD == "OPTIONS") {
+    res$status <- 200
+    return(list())
+  }
+
+  plumber::forward()
+}
+
 ANALISIS_DIR <- file.path(tempdir(), "karion_analisis")
 dir.create(ANALISIS_DIR, showWarnings = FALSE, recursive = TRUE)
 
