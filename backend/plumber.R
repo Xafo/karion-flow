@@ -18,7 +18,42 @@ library(jsonlite)
 
 `%||%` <- function(a, b) if (is.null(a) || is.na(a)) b else a
 
-#* @filter cors
+get_creds <- function() {
+  raw <- Sys.getenv("KARION_USERS", "")
+  if (nzchar(raw)) {
+    tryCatch(fromJSON(raw), error = function(e) list())
+  } else {
+    list(admin = "admin123", user = "user123")
+  }
+}
+
+#' @filter auth
+function(req, res) {
+  if (req$REQUEST_METHOD == "OPTIONS") return(plumber::forward())
+  if (grepl("^/api/health", req$PATH_INFO)) return(plumber::forward())
+
+  ahdr <- req$HTTP_AUTHORIZATION %||% ""
+  if (!grepl("^Basic ", ahdr)) {
+    res$status <- 401
+    res$setHeader("WWW-Authenticate", "Basic realm=\"Karion-Flow\"")
+    return(list(error = "Autenticacion requerida"))
+  }
+
+  decoded <- rawToChar(base64dec(sub("^Basic ", "", ahdr)))
+  parts <- strsplit(decoded, ":", fixed = TRUE)[[1]]
+  user <- parts[1] %||% ""
+  pass <- parts[2] %||% ""
+
+  creds <- get_creds()
+  if (is.null(creds[[user]]) || creds[[user]] != pass) {
+    res$status <- 401
+    res$setHeader("WWW-Authenticate", "Basic realm=\"Karion-Flow\"")
+    return(list(error = "Credenciales invalidas"))
+  }
+  plumber::forward()
+}
+
+#' @filter cors
 function(req, res) {
   res$setHeader("Access-Control-Allow-Origin", "*")
   res$setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
