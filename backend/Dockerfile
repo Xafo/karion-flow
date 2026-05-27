@@ -26,11 +26,14 @@ RUN Rscript install.R
 
 COPY backend/pipeline.R backend/plumber.R backend/run_job.R /app/
 
-EXPOSE 8080
+RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser \
+    && chown -R appuser:appuser /app /usr/local/lib/R /usr/local/share
+
+USER appuser
+
+EXPOSE 7860
 
 ENV R_ENVIRON=""
-ENV KARION_ANALISIS_DIR="/data/analisis"
+ENV KARION_ANALISIS_DIR="/tmp/karion_analisis"
 
-VOLUME /data/analisis
-
-CMD ["R", "-e", "library(plumber); pr('/app/plumber.R') %>% pr_run(host='0.0.0.0', port=8080)"]
+CMD ["R", "-e", "library(plumber); pr('/app/plumber.R') %>% pr_run(host='0.0.0.0', port=7860)"]
