@@ -258,6 +258,43 @@ body {
   padding: 40px 0;
 }
 
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal h2 { margin: 0 0 20px; }
+.modal label {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.modal input {
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.modal-actions { margin-top: 20px; display: flex; gap: 10px; }
+.error-msg { color: #e53e3e; font-size: 13px; }
+
 /* Footer */
 .app-footer {
   border-top: 1px solid var(--border);

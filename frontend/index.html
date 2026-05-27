@@ -18,6 +18,7 @@
         <a href="#historial" data-page="historial">Historial</a>
         <a href="#template" data-page="template">Template</a>
       </nav>
+      <button id="login-logout" class="btn btn-small btn-outline" style="margin-left:auto">Salir</button>
     </header>
 
     <main class="app-main">
@@ -130,6 +131,26 @@
       <span>Karion-Flow v1.0</span>
       <span>Ing. Gabriel Rivera & Dra. Karina Lanza</span>
     </footer>
+  </div>
+
+  <div id="login-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <h2>Iniciar Sesión</h2>
+      <form id="login-form">
+        <label>
+          Usuario
+          <input type="text" id="login-user" required autocomplete="username">
+        </label>
+        <label>
+          Contraseña
+          <input type="password" id="login-pass" required autocomplete="current-password">
+        </label>
+        <p id="login-error" class="error-msg" hidden>Credenciales inválidas</p>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Ingresar</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script src="app.js"></script>

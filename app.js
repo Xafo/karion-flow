@@ -6,8 +6,39 @@ const state = {
   files: [],
   analysisId: null,
   pollingInterval: null,
-  historial: JSON.parse(localStorage.getItem('karion_historial') || '[]')
+  historial: JSON.parse(localStorage.getItem('karion_historial') || '[]'),
+  auth: JSON.parse(localStorage.getItem('karion_auth') || 'null')
 };
+
+function getAuthHeaders() {
+  if (!state.auth) return {};
+  const encoded = btoa(`${state.auth.user}:${state.auth.pass}`);
+  return { 'Authorization': `Basic ${encoded}` };
+}
+
+function logout() {
+  state.auth = null;
+  localStorage.removeItem('karion_auth');
+  $('login-modal').hidden = false;
+}
+
+function checkAuth() {
+  if (!state.auth) $('login-modal').hidden = false;
+}
+
+document.getElementById('login-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  if (user && pass) {
+    state.auth = { user, pass };
+    localStorage.setItem('karion_auth', JSON.stringify(state.auth));
+    $('login-modal').hidden = true;
+    $('login-error').hidden = true;
+  }
+});
+
+document.getElementById('login-logout').addEventListener('click', logout);
 
 const $ = id => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
@@ -130,7 +161,7 @@ async function startAnalysis() {
   try {
     const resp = await fetch(`${API_BASE}/api/analizar`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ files: filesPayload })
     });
     const data = await resp.json();
@@ -160,7 +191,7 @@ async function pollStatus(id) {
 
   state.pollingInterval = setInterval(async () => {
     try {
-      const resp = await fetch(`${API_BASE}/api/estado/${id}`);
+      const resp = await fetch(`${API_BASE}/api/estado/${id}`, { headers: getAuthHeaders() });
       const data = await resp.json();
 
       if (data.estado === 'completado') {
@@ -197,7 +228,7 @@ async function showResults(id) {
 
   // Load gates data
   try {
-    const resp = await fetch(`${API_BASE}/api/gates/${id}`);
+    const resp = await fetch(`${API_BASE}/api/gates/${id}`, { headers: getAuthHeaders() });
     const data = await resp.json();
     if (data.composicion && data.composicion.length > 0) {
       renderGates(data.composicion);
@@ -257,7 +288,7 @@ $('btn-save-template').addEventListener('click', async () => {
   try {
     const resp = await fetch(`${API_BASE}/api/template`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ umbral_positividad: umbral, n_poblaciones: nPob })
     });
     const data = await resp.json();
@@ -301,4 +332,5 @@ async function loadHistorial(id) {
 }
 
 // Init
+checkAuth();
 renderHistorial();
