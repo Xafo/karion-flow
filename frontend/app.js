@@ -1,6 +1,6 @@
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8080'
-  : 'https://karion-flow-api.onrender.com';
+  ? 'http://localhost:7860'
+  : 'https://xafor2-karion-flow.hf.space';
 
 const state = {
   files: [],
