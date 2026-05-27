@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karion-Flow — Portal de Citometría</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">Karion-Flow</span>
+      </div>
+      <nav class="app-nav">
+        <a href="#upload" class="active" data-page="upload">Inicio</a>
+        <a href="#historial" data-page="historial">Historial</a>
+        <a href="#template" data-page="template">Template</a>
+      </nav>
+    </header>
+
+    <main class="app-main">
+      <!-- ========== PAGE: UPLOAD ========== -->
+      <section id="page-upload" class="page active">
+        <div class="card upload-card">
+          <h2>Subir archivos FCS</h2>
+          <p class="subtitle">Arrastrá tus archivos .fcs o seleccionalos para iniciar el análisis CLSI H62</p>
+          
+          <div id="dropzone" class="dropzone">
+            <div class="dropzone-content">
+              <div class="dropzone-icon">📂</div>
+              <p>Arrastrá archivos .fcs aquí</p>
+              <p class="dropzone-hint">o hacé clic para seleccionar</p>
+              <input type="file" id="file-input" accept=".fcs" multiple hidden>
+            </div>
+          </div>
+
+          <div id="file-list" class="file-list" hidden>
+            <h3>Archivos seleccionados (<span id="file-count">0</span>)</h3>
+            <ul id="file-items"></ul>
+            <div class="file-actions">
+              <button id="btn-analyze" class="btn btn-primary" disabled>
+                ▶ Iniciar Análisis
+              </button>
+              <button id="btn-clear" class="btn btn-secondary">
+                Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div id="progress-card" class="card progress-card" hidden>
+          <h2>Analizando...</h2>
+          <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+          <p id="progress-status" class="progress-status">Iniciando análisis...</p>
+          <p id="progress-id" class="progress-id"></p>
+        </div>
+
+        <!-- Results -->
+        <div id="results-card" class="card results-card" hidden>
+          <div class="results-header">
+            <h2>Reporte generado</h2>
+            <span class="badge badge-success">Completado</span>
+          </div>
+          <div class="results-actions">
+            <a id="btn-view-report" class="btn btn-primary" target="_blank">
+              📄 Ver Reporte HTML
+            </a>
+            <a id="btn-view-3d" class="btn btn-secondary" target="_blank">
+              🧊 Ver APS 3D
+            </a>
+            <button id="btn-new-analysis" class="btn btn-outline">
+              + Nuevo Análisis
+            </button>
+          </div>
+          <div id="gates-section" class="gates-section" hidden>
+            <h3>Poblaciones detectadas</h3>
+            <div id="gates-table"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: HISTORIAL ========== -->
+      <section id="page-historial" class="page">
+        <div class="card">
+          <h2>Historial de Análisis</h2>
+          <div id="historial-list">
+            <p class="empty-state">No hay análisis previos.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: TEMPLATE ========== -->
+      <section id="page-template" class="page">
+        <div class="card">
+          <h2>Template de Gating</h2>
+          <p class="subtitle">Configuración del algoritmo de clasificación de poblaciones</p>
+          
+          <div class="template-form">
+            <div class="form-group">
+              <label for="template-umbral">Umbral de positividad (logicle)</label>
+              <input type="number" id="template-umbral" value="1.5" step="0.1" min="0" max="5">
+            </div>
+            <div class="form-group">
+              <label for="template-poblaciones">Número de poblaciones CLSI</label>
+              <input type="number" id="template-poblaciones" value="5" min="3" max="8">
+            </div>
+            <div class="form-group">
+              <label>Poblaciones</label>
+              <ul id="template-pob-list">
+                <li>Blastos — CD45 dim/neg, SSC bajo</li>
+                <li>Linfocitos — CD45 brillante, SSC bajo</li>
+                <li>Monocitos — CD45 brillante, SSC intermedio</li>
+                <li>Granulocitos — CD45 intermedio, SSC alto</li>
+                <li>Eosinofilos — CD45 intermedio, SSC muy alto</li>
+              </ul>
+            </div>
+            <button id="btn-save-template" class="btn btn-primary">Guardar Template</button>
+            <span id="template-status" class="template-status"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>Karion-Flow v1.0</span>
+      <span>Ing. Gabriel Rivera & Dra. Karina Lanza</span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
