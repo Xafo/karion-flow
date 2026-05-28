@@ -36,4 +36,4 @@ EXPOSE 7860
 ENV R_ENVIRON=""
 ENV KARION_ANALISIS_DIR="/tmp/karion_analisis"
 
-CMD ["R", "-e", "library(plumber); pr('/app/plumber.R') %>% pr_run(host='0.0.0.0', port=7860)"]
+CMD ["R", "-e", "library(plumber); pr('/app/plumber.R') %>% pr_run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT', '7860')))"]
