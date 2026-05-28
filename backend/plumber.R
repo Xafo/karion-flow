@@ -1,7 +1,7 @@
 # =============================================================================
 # plumber.R  --  API REST para Karion-Flow
 # =============================================================================
-# Ejecutar: R -e "library(plumber); pr('plumber.R') %>% pr_run(host='0.0.0.0', port=7860)"
+# Ejecutar: R -e "library(plumber); pr('plumber.R') %>% pr_run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT', '8080')))"
 # Endpoints:
 #   POST /api/analizar   -> Recibe FCS, inicia analisis
 #   GET  /api/estado/:id -> Estado del analisis
